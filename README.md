@@ -230,14 +230,63 @@ go install github.com/heyangguang/queenbee@latest
 ### 启动
 
 ```bash
-# 启动服务器（默认端口 9876）
-queenbee serve
+# 启动服务器（默认端口 3777）
+queenbee start
 
-# 指定端口
-queenbee serve --port 8080
+# 后台运行
+queenbee start --daemon
 
 # 健康检查
-curl http://localhost:9876/health
+curl http://localhost:3777/health
+```
+
+### 🐳 Docker 部署
+
+```bash
+# 拉取镜像
+docker pull ghcr.io/heyangguang/queenbee:latest
+
+# 运行后端
+docker run -d --name queenbee \
+  -p 3777:3777 \
+  -v queenbee-data:/data \
+  ghcr.io/heyangguang/queenbee:latest
+
+# 前后端一起启动
+docker run -d --name queenbee -p 3777:3777 -v queenbee-data:/data ghcr.io/heyangguang/queenbee:latest
+docker run -d --name queenbee-ui -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:3777 ghcr.io/heyangguang/queenbee-ui:latest
+```
+
+**Docker Compose：**
+
+```yaml
+# docker-compose.yml
+services:
+  queenbee:
+    image: ghcr.io/heyangguang/queenbee:latest
+    ports:
+      - "3777:3777"
+    volumes:
+      - queenbee-data:/data
+    restart: unless-stopped
+
+  queenbee-ui:
+    image: ghcr.io/heyangguang/queenbee-ui:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://queenbee:3777
+    depends_on:
+      - queenbee
+    restart: unless-stopped
+
+volumes:
+  queenbee-data:
+```
+
+```bash
+docker compose up -d
+# 打开 http://localhost:3000 即可使用
 ```
 
 ---
