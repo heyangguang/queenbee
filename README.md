@@ -291,6 +291,177 @@ docker compose up -d
 
 ---
 
+## ⚙️ 模型配置
+
+### 前提：安装 AI CLI 工具
+
+QueenBee **不直接调用 AI API**，而是通过 `os/exec` 调用本地安装的 CLI 工具。你只需要在本地安装对应的 CLI 并完成认证（登录 / 设置 API Key），QueenBee 就能直接使用。
+
+| Provider | CLI 工具 | 安装方式 | 认证方式 |
+|:---------|:---------|:---------|:---------|
+| **Anthropic** | `claude` | `npm install -g @anthropic-ai/claude-code` | `claude` 首次运行会引导登录 |
+| **Google** | `gemini` | `npm install -g @anthropic-ai/gemini-cli` | `gemini` 首次运行会引导登录 |
+| **OpenAI** | `codex` | `npm install -g @openai/codex` | `export OPENAI_API_KEY=sk-xxx` |
+| **OpenCode** | `opencode` | `go install github.com/opencode-ai/opencode@latest` | 配置文件中设置 API Key |
+
+> **💡 只需安装一个 CLI 即可使用。** QueenBee 会自动检测本地已安装的 CLI。
+
+### 验证 CLI 可用
+
+```bash
+# 检查 CLI 是否安装成功（任意一个即可）
+claude --version
+gemini --version
+codex --version
+opencode --version
+```
+
+只要对应的 CLI 能正常响应，QueenBee 就能调用它。
+
+### 模型别名
+
+QueenBee 支持简短别名，自动映射为完整模型 ID：
+
+<details>
+<summary><b>📋 Anthropic (Claude CLI) 模型别名</b></summary>
+
+| 别名 | 完整模型 ID |
+|:-----|:-----------|
+| `sonnet` | `claude-sonnet-4-6` |
+| `opus` | `claude-opus-4-6` |
+| `haiku` | `claude-haiku-4-5` |
+
+</details>
+
+<details>
+<summary><b>📋 Google (Gemini CLI) 模型别名</b></summary>
+
+| 别名 | 完整模型 ID |
+|:-----|:-----------|
+| `flash` | `gemini-2.5-flash` |
+| `pro` | `gemini-2.5-pro` |
+
+</details>
+
+<details>
+<summary><b>📋 OpenAI (Codex CLI) 模型别名</b></summary>
+
+| 别名 | 完整模型 ID |
+|:-----|:-----------|
+| `gpt-5.3-codex` | `gpt-5.3-codex` |
+| `codex-mini` | `codex-mini-latest` |
+| `o4-mini` | `o4-mini` |
+
+</details>
+
+<details>
+<summary><b>📋 OpenCode 模型别名</b></summary>
+
+| 别名 | 完整模型 ID |
+|:-----|:-----------|
+| `sonnet` | `opencode/claude-sonnet-4-5` |
+| `opus` | `opencode/claude-opus-4-6` |
+
+支持多个底层 Provider：Claude、Gemini、GLM、Kimi、MiniMax 等。
+
+</details>
+
+### 通过 API 配置 Agent 的 Provider 和模型
+
+```bash
+# 创建一个使用 Claude 的 Agent
+curl -X POST http://localhost:3777/api/agents \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "coder",
+    "name": "Coder",
+    "provider": "anthropic",
+    "model": "sonnet"
+  }'
+
+# 创建一个带 Fallback 的 Agent（Claude 失败自动切换 Gemini）
+curl -X POST http://localhost:3777/api/agents \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "reviewer",
+    "name": "Reviewer",
+    "provider": "anthropic",
+    "model": "sonnet",
+    "fallback_provider": "gemini",
+    "fallback_model": "pro"
+  }'
+```
+
+### 环境变量
+
+如果 CLI 需要 API Key，可通过全局环境变量配置：
+
+```bash
+# 通过 Settings API 设置全局环境变量
+curl -X PUT http://localhost:3777/api/settings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "env": {
+      "OPENAI_API_KEY": "sk-xxx",
+      "ANTHROPIC_API_KEY": "sk-ant-xxx"
+    }
+  }'
+```
+
+也可直接在前端的 **Settings → 环境变量** 页面中配置。
+
+---
+
+## 🔗 前后端连接
+
+### 默认配置（零配置即可连通）
+
+| 服务 | 默认端口 | 说明 |
+|:-----|:---------|:-----|
+| **QueenBee 后端** | `3777` | REST API + SSE 事件流 |
+| **QueenBee Workstation (前端)** | `3000` | Next.js Web 界面 |
+
+> **默认即可连通**：前端默认连接 `http://localhost:3777`，后端默认监听 `3777` 端口，两者都在本地启动时无需任何配置。
+
+### 修改后端端口
+
+后端端口目前硬编码为 `3777`，如需修改请编辑 `internal/server/server.go` 中的端口值后重新编译。
+
+### 修改前端连接地址
+
+如果后端不在默认地址，有两种方式修改：
+
+**方式一：环境变量（推荐）**
+
+```bash
+# 开发模式
+NEXT_PUBLIC_API_URL=http://192.168.1.100:3777 npm run dev
+
+# 或创建 .env.local 文件
+echo "NEXT_PUBLIC_API_URL=http://your-server:3777" > .env.local
+npm run dev
+```
+
+**方式二：Docker 部署时指定**
+
+```bash
+docker run -d -p 3000:3000 \
+  -e NEXT_PUBLIC_API_URL=http://your-server:3777 \
+  ghcr.io/heyangguang/queenbee-ui:latest
+```
+
+### 跨机器部署示例
+
+```
+服务器 A (192.168.1.10) — 后端
+  queenbee start → 监听 3777
+
+服务器 B (192.168.1.20) — 前端
+  NEXT_PUBLIC_API_URL=http://192.168.1.10:3777 npm run dev → 连接服务器 A
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
