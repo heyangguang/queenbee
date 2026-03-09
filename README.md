@@ -213,7 +213,21 @@ Agent 组织为 Team，支持 Leader 分发和队友间直接对话：
   - [Codex CLI](https://github.com/openai/codex) (`codex`)
   - [OpenCode](https://github.com/opencode-ai/opencode) (`opencode`)
 
-### 安装
+### 一键安装（推荐）
+
+**macOS / Linux / FreeBSD：**
+```bash
+curl -fsSL https://raw.githubusercontent.com/heyangguang/queenbee/main/install.sh | sh
+```
+
+**Windows (PowerShell)：**
+```powershell
+irm https://raw.githubusercontent.com/heyangguang/queenbee/main/install.ps1 | iex
+```
+
+> 自动检测平台和架构，下载最新版本并安装。
+
+### 从源码构建
 
 ```bash
 # 克隆仓库
@@ -234,10 +248,32 @@ go install github.com/heyangguang/queenbee@latest
 queenbee start
 
 # 后台运行
-queenbee start --daemon
+nohup queenbee start > /dev/null 2>&1 &
 
 # 健康检查
 curl http://localhost:3777/api/health
+```
+
+### 🧠 安装 Ollama（可选，强烈推荐）
+
+Ollama 为 QueenBee 的记忆系统提供**语义向量搜索**能力。没有 Ollama 时记忆搜索降级为关键词匹配（效果差很多）。
+
+```bash
+# 安装 Ollama（Linux 一行命令）
+curl -fsSL https://ollama.com/install.sh | sh
+
+# 下载嵌入模型（约 270MB，只需一次）
+ollama pull nomic-embed-text
+
+# 验证 Ollama 运行中
+curl http://localhost:11434/api/tags
+```
+
+> **macOS/Windows**: 从 [ollama.com](https://ollama.com/download) 下载桌面应用，安装后运行 `ollama pull nomic-embed-text`。
+
+QueenBee 启动时自动检测 Ollama，检测到后日志会显示：
+```
+[INFO] ✅ Ollama 已连接，Memory 搜索将使用语义向量匹配
 ```
 
 ### 🐳 Docker 部署

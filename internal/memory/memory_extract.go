@@ -129,11 +129,8 @@ The current project is "%s" (ID: %s).
 			continue
 		}
 
-		// 【改进4】Project scope 校验：确保项目记忆真的包含项目相关内容
-		if scope == "project" && !isValidProjectMemory(content, projectName) {
-			logging.Log("DEBUG", fmt.Sprintf("跳过无效项目记忆: %s", truncateRunes(content, 50)))
-			continue
-		}
+		// Project scope 的验证已在 AI prompt 中完成（scope 分类由 AI 决定）
+		// 代码层只检查 projID 是否存在（第 141 行），不再做内容关键词过滤
 
 		// 根据 scope 决定存储目标
 		switch scope {

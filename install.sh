@@ -114,6 +114,27 @@ install() {
         ok "验证通过: $($BINARY --version 2>/dev/null || echo '已安装')"
     fi
 
+    # Ollama 检测与安装提示
+    echo ""
+    if command -v ollama >/dev/null 2>&1; then
+        ok "Ollama 已安装"
+        # 检查嵌入模型
+        if ollama list 2>/dev/null | grep -q "nomic-embed-text"; then
+            ok "嵌入模型 nomic-embed-text 已就绪"
+        else
+            warn "未检测到嵌入模型，正在下载..."
+            ollama pull nomic-embed-text
+            ok "嵌入模型已下载"
+        fi
+    else
+        warn "未检测到 Ollama — 记忆搜索将使用关键词匹配（效果较弱）"
+        echo ""
+        echo "  推荐安装 Ollama 以启用语义记忆搜索:"
+        echo "    curl -fsSL https://ollama.com/install.sh | sh"
+        echo "    ollama pull nomic-embed-text"
+        echo ""
+    fi
+
     echo ""
     echo "🐝 快速开始:"
     echo "   queenbee start          # 启动服务"
