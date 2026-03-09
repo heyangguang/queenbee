@@ -768,35 +768,21 @@ func StartProcessor() {
 	}
 	logging.EmitEvent("processor_start", map[string]interface{}{"agents": agentKeys, "teams": teamKeys})
 
-	// 启动时扫描已存在的 agent 目录，更新各 CLI 的系统指令文件
-	{
-		agentsMdData, hasTemplate := getTemplateBytes("AGENTS.md")
-		workspace := ""
-		if settings.Workspace != nil {
-			workspace = settings.Workspace.Path
-		}
-		if workspace != "" && hasTemplate {
-			if entries, err := os.ReadDir(workspace); err == nil {
-				for _, entry := range entries {
-					if entry.IsDir() {
-						agentDir := filepath.Join(workspace, entry.Name())
-						agentsMdDst := filepath.Join(agentDir, "AGENTS.md")
-						if _, e := os.Stat(agentsMdDst); e == nil {
-							os.WriteFile(agentsMdDst, agentsMdData, 0o644)
-							// Claude CLI: .claude/CLAUDE.md
-							claudeMd := filepath.Join(agentDir, ".claude", "CLAUDE.md")
-							if _, e2 := os.Stat(claudeMd); e2 == nil {
-								os.WriteFile(claudeMd, agentsMdData, 0o644)
-							}
-							// Gemini CLI: .gemini/GEMINI.md
-							geminiDir := filepath.Join(agentDir, ".gemini")
-							os.MkdirAll(geminiDir, 0o755)
-							os.WriteFile(filepath.Join(geminiDir, "GEMINI.md"), agentsMdData, 0o644)
-						}
-					}
-				}
+	// 启动时确保所有配置的 agent 目录都已初始化模板文件
+	// 对每个 agent 调用 EnsureAgentDirectory，它会自动处理：
+	//   - 首次初始化（创建 AGENTS.md, SOUL.md 等）
+	//   - 已存在的目录（只更新 AGENTS.md，不覆盖 SOUL.md 等个性化文件）
+	for agentID, agent := range startAgents {
+		agentDir := agent.WorkingDirectory
+		if agentDir == "" {
+			home, _ := os.UserHomeDir()
+			workspacePath := filepath.Join(home, "queenbee-workspace")
+			if settings.Workspace != nil && settings.Workspace.Path != "" {
+				workspacePath = settings.Workspace.Path
 			}
+			agentDir = filepath.Join(workspacePath, agentID)
 		}
+		EnsureAgentDirectory(agentDir)
 	}
 
 	// 事件驱动处理
