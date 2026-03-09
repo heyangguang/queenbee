@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/queenbee-ai/queenbee/internal/config"
@@ -24,7 +23,7 @@ var restartCmd = &cobra.Command{
 		pid := readPID(pidFile)
 		if pid > 0 && processExists(pid) {
 			proc, _ := os.FindProcess(pid)
-			proc.Signal(syscall.SIGTERM)
+			proc.Signal(os.Interrupt)
 			fmt.Printf("🛑 已停止 (PID: %d)\n", pid)
 			os.Remove(pidFile)
 			time.Sleep(2 * time.Second)

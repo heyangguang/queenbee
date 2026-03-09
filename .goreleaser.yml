@@ -15,9 +15,17 @@ builds:
     goos:
       - darwin
       - linux
+      - windows
+      - freebsd
     goarch:
       - amd64
       - arm64
+      - "386"
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: freebsd
+        goarch: arm64
     ldflags:
       - -s -w
       - -X main.version={{.Version}}
@@ -28,6 +36,10 @@ archives:
   - id: default
     formats:
       - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
@@ -65,34 +77,35 @@ release:
 
     消息队列驱动的多 AI Agent 协作引擎。
 
-    > **支持平台**: macOS (Apple Silicon / Intel) + Linux (x86_64 / ARM64)
-    >
-    > QueenBee 通过 `os/exec` 调用本地 AI CLI (Claude/Gemini/Codex/OpenCode)，这些 CLI 目前仅支持 macOS 和 Linux。
+    ### 📦 平台支持
 
-    ### 📦 安装
+    | 平台 | 架构 | 文件 |
+    |:-----|:-----|:-----|
+    | macOS | Apple Silicon (ARM64) | `queenbee_{{.Version}}_darwin_arm64.tar.gz` |
+    | macOS | Intel (x86_64) | `queenbee_{{.Version}}_darwin_amd64.tar.gz` |
+    | Linux | x86_64 | `queenbee_{{.Version}}_linux_amd64.tar.gz` |
+    | Linux | ARM64 | `queenbee_{{.Version}}_linux_arm64.tar.gz` |
+    | Linux | x86 (32-bit) | `queenbee_{{.Version}}_linux_386.tar.gz` |
+    | Windows | x86_64 | `queenbee_{{.Version}}_windows_amd64.zip` |
+    | Windows | ARM64 | `queenbee_{{.Version}}_windows_arm64.zip` |
+    | Windows | x86 (32-bit) | `queenbee_{{.Version}}_windows_386.zip` |
+    | FreeBSD | x86_64 | `queenbee_{{.Version}}_freebsd_amd64.tar.gz` |
+    | FreeBSD | x86 (32-bit) | `queenbee_{{.Version}}_freebsd_386.tar.gz` |
 
-    **macOS (Apple Silicon)**
+    ### 📥 快速安装
+
+    **macOS / Linux**
     ```bash
+    # Apple Silicon
     curl -Lo queenbee.tar.gz https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_darwin_arm64.tar.gz
     tar xzf queenbee.tar.gz && sudo mv queenbee /usr/local/bin/
     ```
 
-    **macOS (Intel)**
-    ```bash
-    curl -Lo queenbee.tar.gz https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_darwin_amd64.tar.gz
-    tar xzf queenbee.tar.gz && sudo mv queenbee /usr/local/bin/
-    ```
-
-    **Linux (x86_64)**
-    ```bash
-    curl -Lo queenbee.tar.gz https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_linux_amd64.tar.gz
-    tar xzf queenbee.tar.gz && sudo mv queenbee /usr/local/bin/
-    ```
-
-    **Linux (ARM64)**
-    ```bash
-    curl -Lo queenbee.tar.gz https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_linux_arm64.tar.gz
-    tar xzf queenbee.tar.gz && sudo mv queenbee /usr/local/bin/
+    **Windows (PowerShell)**
+    ```powershell
+    Invoke-WebRequest -Uri "https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_windows_amd64.zip" -OutFile queenbee.zip
+    Expand-Archive queenbee.zip -DestinationPath C:\queenbee
+    # 将 C:\queenbee 添加到 PATH
     ```
   footer: |
     **Full Changelog**: https://github.com/heyangguang/queenbee/compare/{{ .PreviousTag }}...{{ .Tag }}

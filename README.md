@@ -11,6 +11,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
 [![GitHub Stars](https://img.shields.io/github/stars/heyangguang/queenbee?style=for-the-badge&logo=github)](https://github.com/heyangguang/queenbee/stargazers)
 
+**中文 | [English](README_EN.md) | [日本語](README_JA.md)**
+
 **QueenBee 是一个开源的、本地优先的多 AI Agent 协作引擎。** 它通过 SQLite 消息队列调度多个 AI CLI（Claude、Gemini、Codex、OpenCode），让不同 Agent 以 `@mention` 方式协作对话、自动路由、并行执行任务——并在此基础上提供持久记忆、技能系统和灵魂自省能力。
 
 [Getting Started](#-getting-started) · [Architecture](#-architecture) · [Documentation](#-documentation) · [Contributing](#-contributing)

@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
 
 	"github.com/queenbee-ai/queenbee/internal/config"
@@ -98,7 +97,7 @@ func RunCommand(command string, args []string, cwd string, extraEnv map[string]s
 	}
 
 	// 设置进程组，确保超时可以杀掉所有子进程（包括 Codex 启动的 Node.js 等）
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	setProcGroup(cmd)
 
 	// 基于当前进程环境变量，过滤 CLAUDECODE
 	env := os.Environ()
@@ -192,7 +191,7 @@ loop:
 			if idle > idleTimeout {
 				idleKilled = true
 				if cmd.Process != nil {
-					syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+					killProcessGroup(cmd.Process.Pid)
 				}
 				logging.Log("ERROR", fmt.Sprintf(
 					"命令 %s 空闲超时（%v 无输出），判定为卡死并终止",
@@ -248,7 +247,7 @@ loop:
 
 	if ctx.Err() == context.DeadlineExceeded {
 		if cmd.Process != nil {
-			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			killProcessGroup(cmd.Process.Pid)
 		}
 		logging.Log("ERROR", fmt.Sprintf("命令 %s 绝对超时并被强杀（%d 分钟限制）", command, timeoutMin))
 		if agentID != "" {
@@ -866,7 +865,7 @@ func KillAgentProcess(agentID string) bool {
 	// 杀掉整个进程组（包括子进程如 Node.js 等）
 	// 先设标记，让 ProcessMessage 知道这是手动强杀
 	killedAgentStore.Store(agentID, true)
-	if err := syscall.Kill(-proc.Pid, syscall.SIGKILL); err != nil {
+	if err := killProcessGroup(proc.Pid); err != nil {
 		logging.Log("WARN", fmt.Sprintf("强杀 agent %s 进程组 (pid=%d) 失败: %v", agentID, proc.Pid, err))
 		// 尝试直接杀进程
 		proc.Kill()

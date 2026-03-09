@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/queenbee-ai/queenbee/internal/config"
@@ -127,7 +126,7 @@ var startCmd = &cobra.Command{
 
 		// 等待信号
 		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+		signal.Notify(sig, os.Interrupt)
 		<-sig
 
 		fmt.Println("\n🛑 正在关闭...")
@@ -159,7 +158,7 @@ var stopCmd = &cobra.Command{
 			fmt.Printf("❌ 找不到进程 %d\n", pid)
 			return
 		}
-		proc.Signal(syscall.SIGTERM)
+		proc.Signal(os.Interrupt)
 		os.Remove(pidFile)
 		fmt.Printf("✅ 已停止 QueenBee (PID: %d)\n", pid)
 	},
@@ -687,7 +686,8 @@ func processExists(pid int) bool {
 	if err != nil {
 		return false
 	}
-	err = proc.Signal(syscall.Signal(0))
+	// 发送 nil 信号检测进程是否存在（Unix: kill(pid, 0)），Windows 上 FindProcess 总成功
+	err = proc.Signal(nil)
 	return err == nil
 }
 
