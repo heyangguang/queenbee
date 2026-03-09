@@ -1,0 +1,30 @@
+# 二进制
+queenbee
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+*.test
+*.out
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+
+# CI
+.github/
+
+# 文档
+docs/
+*.md
+LICENSE
