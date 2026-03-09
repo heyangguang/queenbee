@@ -108,6 +108,13 @@ The current project is "%s" (ID: %s).
 		}
 
 		scope, category, content := parseScopedLine(line)
+		// 如果 AI 没有正确输出 scope 前缀（默认 agent），根据内容关键词推断实际 scope
+		if scope == "agent" {
+			inferred := inferScope(content)
+			if inferred != "agent" {
+				scope = inferred
+			}
+		}
 		if content == "" || strings.Contains(strings.ToUpper(content), "NONE") {
 			continue
 		}
@@ -257,17 +264,34 @@ func parseScopedLine(line string) (scope, category, content string) {
 	scope = "agent"
 	category = "fact"
 
-	if !strings.HasPrefix(line, "[") {
-		return scope, category, line
+	// 去掉常见的列表前缀（1. 2. - * 等）
+	cleaned := strings.TrimLeft(line, " \t")
+	if len(cleaned) > 0 && (cleaned[0] == '-' || cleaned[0] == '*') {
+		cleaned = strings.TrimSpace(cleaned[1:])
+	} else if len(cleaned) > 2 && cleaned[0] >= '0' && cleaned[0] <= '9' {
+		// 跳过数字前缀如 "1. " "2) "
+		for i, c := range cleaned {
+			if c == '.' || c == ')' {
+				cleaned = strings.TrimSpace(cleaned[i+1:])
+				break
+			}
+			if c < '0' || c > '9' {
+				break
+			}
+		}
 	}
 
-	idx := strings.Index(line, "]")
+	if !strings.HasPrefix(cleaned, "[") {
+		return scope, category, cleaned
+	}
+
+	idx := strings.Index(cleaned, "]")
 	if idx < 0 {
-		return scope, category, line
+		return scope, category, cleaned
 	}
 
-	tag := strings.ToLower(strings.TrimSpace(line[1:idx]))
-	content = strings.TrimSpace(line[idx+1:])
+	tag := strings.ToLower(strings.TrimSpace(cleaned[1:idx]))
+	content = strings.TrimSpace(cleaned[idx+1:])
 
 	// 解析 scope:category:importance 或 scope:category
 	parts := strings.SplitN(tag, ":", 3)
@@ -296,6 +320,46 @@ func parseScopedLine(line string) (scope, category, content string) {
 	}
 
 	return scope, category, content
+}
+
+// inferScope 当 AI 没有输出正确的 scope 前缀时，根据内容关键词推断 scope
+// 只在 scope 为默认值 "agent" 时调用
+func inferScope(content string) string {
+	lower := strings.ToLower(content)
+
+	// 用户个人信息关键词 → user scope
+	userKeywords := []string{
+		// 中文
+		"用户", "客户", "我叫", "名字", "叫做", "偏好", "喜欢", "习惯",
+		"他说", "她说", "我的", "用户名", "称呼",
+		// 英文
+		"user", "my name", "called", "prefer", "preference", "habit",
+		"the human", "customer", "client",
+		"user's name", "user name", "user prefers",
+	}
+	for _, kw := range userKeywords {
+		if strings.Contains(lower, kw) {
+			return "user"
+		}
+	}
+
+	// 项目/技术关键词 → project scope
+	projectKeywords := []string{
+		// 中文
+		"项目", "仓库", "代码", "技术栈", "数据库", "架构", "部署", "配置",
+		"接口", "端口", "路由", "模块", "组件", "依赖",
+		// 英文
+		"project", "repo", "codebase", "tech stack", "database", "schema",
+		"architecture", "deploy", "config", "api", "endpoint", "route",
+		"module", "component", "dependency", "framework",
+	}
+	for _, kw := range projectKeywords {
+		if strings.Contains(lower, kw) {
+			return "project"
+		}
+	}
+
+	return "agent"
 }
 
 // isLowQualityContent 检查内容是否为低质量（应跳过）
