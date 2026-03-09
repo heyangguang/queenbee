@@ -227,12 +227,6 @@ go build -o queenbee .
 go install github.com/heyangguang/queenbee@latest
 ```
 
-### macOS Quick Install
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/heyangguang/queenbee/main/darwin-install.sh | bash
-```
-
 ### Launch
 
 ```bash
