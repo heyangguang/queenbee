@@ -1,0 +1,40 @@
+# 二进制
+queenbee
+*.exe
+*.dll
+*.so
+*.dylib
+
+# 测试
+*.test
+*.out
+coverage.txt
+
+# 依赖（可选，Go modules 建议提交 go.sum）
+# vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 本地配置
+*.local
+.env
+.env.*
+
+# 日志
+*.log
+logs/
+
+# 数据库
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
