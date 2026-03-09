@@ -320,7 +320,7 @@ queenbee/
 | **Provider** | `GET` | `/providers` | 利用可能な AI プロバイダー一覧 |
 | | `GET` | `/providers/:id/models` | プロバイダーの利用可能なモデル |
 | **Soul** | `GET` | `/agents/:id/soul` | エージェントの SOUL.md を読取 |
-| **System** | `GET` | `/health` | ヘルスチェック |
+| **System** | `GET` | `/api/health` | ヘルスチェック |
 | | `GET` | `/system/status` | システム状態（OS/メモリ/Goroutine） |
 | **SSE** | `GET` | `/events` | リアルタイムイベントストリーム |
 | **Response** | `GET` | `/responses/recent` | 最近のレスポンス |

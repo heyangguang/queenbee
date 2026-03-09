@@ -320,7 +320,7 @@ queenbee/
 | **Provider** | `GET` | `/providers` | Available AI Provider list |
 | | `GET` | `/providers/:id/models` | Provider's available models |
 | **Soul** | `GET` | `/agents/:id/soul` | Read Agent's SOUL.md |
-| **System** | `GET` | `/health` | Health check |
+| **System** | `GET` | `/api/health` | Health check |
 | | `GET` | `/system/status` | System status (OS/Memory/Goroutine) |
 | **SSE** | `GET` | `/events` | Real-time event stream |
 | **Response** | `GET` | `/responses/recent` | Recent responses |

@@ -237,7 +237,7 @@ queenbee start
 queenbee start --daemon
 
 # 健康检查
-curl http://localhost:3777/health
+curl http://localhost:3777/api/health
 ```
 
 ### 🐳 Docker 部署
@@ -540,7 +540,7 @@ queenbee/
 | **Provider** | `GET` | `/providers` | 可用 AI Provider 列表 |
 | | `GET` | `/providers/:id/models` | Provider 的可用模型 |
 | **Soul** | `GET` | `/agents/:id/soul` | 读取 Agent 的 SOUL.md |
-| **System** | `GET` | `/health` | 健康检查 |
+| **System** | `GET` | `/api/health` | 健康检查 |
 | | `GET` | `/system/status` | 系统状态（OS/内存/Goroutine） |
 | **SSE** | `GET` | `/events` | 实时事件流 |
 | **Response** | `GET` | `/responses/recent` | 最近响应 |
