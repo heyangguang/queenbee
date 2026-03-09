@@ -14,7 +14,6 @@ FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=builder /build/queenbee /usr/local/bin/queenbee
-COPY --from=builder /build/templates /opt/queenbee/templates
 
 ENV QUEENBEE_HOME=/data
 VOLUME /data

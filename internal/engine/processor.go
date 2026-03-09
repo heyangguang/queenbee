@@ -768,33 +768,30 @@ func StartProcessor() {
 	}
 	logging.EmitEvent("processor_start", map[string]interface{}{"agents": agentKeys, "teams": teamKeys})
 
-	// 启动时扫描已存在的 agent 目录，更新各 CLI 的系统指令文件（轻量版：只复制文件）
+	// 启动时扫描已存在的 agent 目录，更新各 CLI 的系统指令文件
 	{
-		exe, _ := os.Executable()
-		agentsMdSrc := filepath.Join(filepath.Dir(exe), "templates", "AGENTS.md")
+		agentsMdData, hasTemplate := getTemplateBytes("AGENTS.md")
 		workspace := ""
 		if settings.Workspace != nil {
 			workspace = settings.Workspace.Path
 		}
-		if workspace != "" {
-			if _, serr := os.Stat(agentsMdSrc); serr == nil {
-				if entries, err := os.ReadDir(workspace); err == nil {
-					for _, entry := range entries {
-						if entry.IsDir() {
-							agentDir := filepath.Join(workspace, entry.Name())
-							agentsMdDst := filepath.Join(agentDir, "AGENTS.md")
-							if _, e := os.Stat(agentsMdDst); e == nil {
-								copyFile(agentsMdSrc, agentsMdDst)
-								// Claude CLI: .claude/CLAUDE.md
-								claudeMd := filepath.Join(agentDir, ".claude", "CLAUDE.md")
-								if _, e2 := os.Stat(claudeMd); e2 == nil {
-									copyFile(agentsMdSrc, claudeMd)
-								}
-								// Gemini CLI: .gemini/GEMINI.md
-								geminiDir := filepath.Join(agentDir, ".gemini")
-								os.MkdirAll(geminiDir, 0o755)
-								copyFile(agentsMdSrc, filepath.Join(geminiDir, "GEMINI.md"))
+		if workspace != "" && hasTemplate {
+			if entries, err := os.ReadDir(workspace); err == nil {
+				for _, entry := range entries {
+					if entry.IsDir() {
+						agentDir := filepath.Join(workspace, entry.Name())
+						agentsMdDst := filepath.Join(agentDir, "AGENTS.md")
+						if _, e := os.Stat(agentsMdDst); e == nil {
+							os.WriteFile(agentsMdDst, agentsMdData, 0o644)
+							// Claude CLI: .claude/CLAUDE.md
+							claudeMd := filepath.Join(agentDir, ".claude", "CLAUDE.md")
+							if _, e2 := os.Stat(claudeMd); e2 == nil {
+								os.WriteFile(claudeMd, agentsMdData, 0o644)
 							}
+							// Gemini CLI: .gemini/GEMINI.md
+							geminiDir := filepath.Join(agentDir, ".gemini")
+							os.MkdirAll(geminiDir, 0o755)
+							os.WriteFile(filepath.Join(geminiDir, "GEMINI.md"), agentsMdData, 0o644)
 						}
 					}
 				}

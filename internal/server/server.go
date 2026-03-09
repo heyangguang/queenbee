@@ -966,6 +966,7 @@ func handleSSE(c *gin.Context) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
 
 	// 支持按 conversation_id 过滤
 	filterConvID := c.Query("conversation_id")
@@ -1010,6 +1011,7 @@ func handleActivitySSE(c *gin.Context) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
 
 	// 支持按 agentId 过滤
 	filterAgent := c.Query("agent_id")

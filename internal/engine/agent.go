@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/queenbee-ai/queenbee/internal/logging"
+	"github.com/queenbee-ai/queenbee/templates"
 	"github.com/queenbee-ai/queenbee/types"
 )
 
@@ -57,67 +58,72 @@ func copyFile(src, dest string) error {
 	return err
 }
 
-// EnsureAgentDirectory 确保 Agent 目录存在并包含模板文件
-// 模板统一从 binary 同级目录的 templates/ 子目录读取
-func EnsureAgentDirectory(agentDir string) {
+// getTemplateBytes 读取模板文件内容
+// 优先从外部 templates/ 目录读取（支持用户自定义覆盖），回退到编译时嵌入的模板
+func getTemplateBytes(filename string) ([]byte, bool) {
+	// 优先：binary 同级的 templates/ 目录（允许用户自定义覆盖）
 	exe, _ := os.Executable()
-	// 模板目录 = binary 所在目录/templates/
-	templatesDir := filepath.Join(filepath.Dir(exe), "templates")
-
-	// 不管目录是否存在，每次都从模板更新 AGENTS.md 和各 CLI 的专属配置文件
-	// 各 CLI 目录直接 MkdirAll，不依赖它预先存在
-	agentsMdSrc := filepath.Join(templatesDir, "AGENTS.md")
-	if _, err := os.Stat(agentsMdSrc); err == nil {
-		os.MkdirAll(agentDir, 0o755)
-		copyFile(agentsMdSrc, filepath.Join(agentDir, "AGENTS.md"))
-		// Claude CLI: .claude/CLAUDE.md
-		targetClaudeDir := filepath.Join(agentDir, ".claude")
-		os.MkdirAll(targetClaudeDir, 0o755)
-		copyFile(agentsMdSrc, filepath.Join(targetClaudeDir, "CLAUDE.md"))
-		// Gemini CLI: .gemini/GEMINI.md（Gemini 不识别 AGENTS.md，必须用此文件）
-		targetGeminiDir := filepath.Join(agentDir, ".gemini")
-		os.MkdirAll(targetGeminiDir, 0o755)
-		copyFile(agentsMdSrc, filepath.Join(targetGeminiDir, "GEMINI.md"))
-		// 注：Codex / OpenCode 原生读根目录 AGENTS.md，无需专属文件
+	externalPath := filepath.Join(filepath.Dir(exe), "templates", filename)
+	if data, err := os.ReadFile(externalPath); err == nil {
+		return data, true
 	}
+	// 回退：编译时嵌入的模板
+	if data, err := templates.FS.ReadFile(filename); err == nil {
+		return data, true
+	}
+	return nil, false
+}
+
+// writeTemplateToFile 将模板文件写入目标路径
+func writeTemplateToFile(templateName, destPath string) bool {
+	data, ok := getTemplateBytes(templateName)
+	if !ok {
+		return false
+	}
+	os.MkdirAll(filepath.Dir(destPath), 0o755)
+	return os.WriteFile(destPath, data, 0o644) == nil
+}
+
+// EnsureAgentDirectory 确保 Agent 目录存在并包含模板文件
+// 模板优先从外部 templates/ 目录读取，回退到编译时嵌入的模板
+func EnsureAgentDirectory(agentDir string) {
+	// 不管目录是否存在，每次都从模板更新 AGENTS.md 和各 CLI 的专属配置文件
+	os.MkdirAll(agentDir, 0o755)
+	writeTemplateToFile("AGENTS.md", filepath.Join(agentDir, "AGENTS.md"))
+	// Claude CLI: .claude/CLAUDE.md
+	targetClaudeDir := filepath.Join(agentDir, ".claude")
+	os.MkdirAll(targetClaudeDir, 0o755)
+	writeTemplateToFile("AGENTS.md", filepath.Join(targetClaudeDir, "CLAUDE.md"))
+	// Gemini CLI: .gemini/GEMINI.md（Gemini 不识别 AGENTS.md，必须用此文件）
+	targetGeminiDir := filepath.Join(agentDir, ".gemini")
+	os.MkdirAll(targetGeminiDir, 0o755)
+	writeTemplateToFile("AGENTS.md", filepath.Join(targetGeminiDir, "GEMINI.md"))
+	// 注：Codex / OpenCode 原生读根目录 AGENTS.md，无需专属文件
 
 	// 目录已存在时只更新 AGENTS.md 和确保 SOUL.md 存在，跳过完整初始化
-	if _, err := os.Stat(agentDir); err == nil {
+	if _, err := os.Stat(filepath.Join(agentDir, "heartbeat.md")); err == nil {
 		// SOUL.md 只在不存在时初始化（不覆盖 agent 的个性化内容）
 		soulDest := filepath.Join(agentDir, "SOUL.md")
 		if _, err := os.Stat(soulDest); os.IsNotExist(err) {
-			soulSrc := filepath.Join(templatesDir, "SOUL.md")
-			copyTemplateFile(soulSrc, soulDest)
+			writeTemplateToFile("SOUL.md", soulDest)
 		}
 		// 确保是 git 仓库（Claude CLI 需要 git 项目根来发现 .claude/skills/）
 		ensureGitRepo(agentDir)
 		return
 	}
 
-	os.MkdirAll(agentDir, 0o755)
-
-	// 复制 .claude/ 整个源目录
+	// 复制 .claude/ 整个源目录（如果外部存在）
+	exe, _ := os.Executable()
+	templatesDir := filepath.Join(filepath.Dir(exe), "templates")
 	sourceClaudeDir := filepath.Join(templatesDir, ".claude")
-	targetClaudeDir := filepath.Join(agentDir, ".claude")
 	if _, err := os.Stat(sourceClaudeDir); err == nil {
 		CopyDir(sourceClaudeDir, targetClaudeDir)
-	} else {
-		os.MkdirAll(targetClaudeDir, 0o755)
 	}
-
-	// 创建 .gemini/ 目录（Gemini CLI 专属）
-	targetGeminiDir := filepath.Join(agentDir, ".gemini")
-	os.MkdirAll(targetGeminiDir, 0o755)
 
 	// 复制 heartbeat.md
-	copyTemplateFile(filepath.Join(templatesDir, "heartbeat.md"), filepath.Join(agentDir, "heartbeat.md"))
+	writeTemplateToFile("heartbeat.md", filepath.Join(agentDir, "heartbeat.md"))
 
-	// 复制 AGENTS.md → 各 CLI 专属配置文件
-	if _, err := os.Stat(agentsMdSrc); err == nil {
-		os.MkdirAll(targetClaudeDir, 0o755)
-		copyFile(agentsMdSrc, filepath.Join(targetClaudeDir, "CLAUDE.md"))
-		copyFile(agentsMdSrc, filepath.Join(targetGeminiDir, "GEMINI.md"))
-	}
+	// AGENTS.md → 各 CLI 专属配置文件（已在上面写过）
 
 	// 复制 .agents/skills → 各 CLI 的技能目录
 	sourceSkills := filepath.Join(templatesDir, ".agents", "skills")
@@ -137,7 +143,7 @@ func EnsureAgentDirectory(agentDir string) {
 	}
 
 	// 复制 SOUL.md 到工作目录根
-	copyTemplateFile(filepath.Join(templatesDir, "SOUL.md"), filepath.Join(agentDir, "SOUL.md"))
+	writeTemplateToFile("SOUL.md", filepath.Join(agentDir, "SOUL.md"))
 
 	// 初始化 git 仓库（Claude CLI 需要 git 项目根来发现 .claude/skills/）
 	ensureGitRepo(agentDir)
