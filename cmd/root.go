@@ -198,7 +198,7 @@ var setupCmd = &cobra.Command{
 	Short: "交互式配置向导",
 	Run: func(cmd *cobra.Command, args []string) {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Println("\n🐝 QueenBee 配置向导\n")
+		fmt.Println("\n🐝 QueenBee 配置向导")
 
 		// Workspace
 		home, _ := os.UserHomeDir()
