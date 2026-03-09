@@ -1,0 +1,98 @@
+version: 2
+
+project_name: queenbee
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: queenbee
+    main: .
+    binary: queenbee
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: linux
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE*
+      - templates/**/*
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+  groups:
+    - title: "🚀 Features"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "🐛 Bug Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "📦 Other"
+      order: 999
+
+release:
+  github:
+    owner: heyangguang
+    name: queenbee
+  name_template: "v{{.Version}}"
+  header: |
+    ## 🐝 QueenBee v{{.Version}}
+
+    消息队列驱动的多 AI Agent 协作引擎。
+
+    ### 📦 安装
+
+    **macOS (Apple Silicon)**
+    ```bash
+    curl -Lo queenbee.tar.gz https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_darwin_arm64.tar.gz
+    tar xzf queenbee.tar.gz
+    sudo mv queenbee /usr/local/bin/
+    ```
+
+    **macOS (Intel)**
+    ```bash
+    curl -Lo queenbee.tar.gz https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_darwin_amd64.tar.gz
+    tar xzf queenbee.tar.gz
+    sudo mv queenbee /usr/local/bin/
+    ```
+
+    **Linux (x86_64)**
+    ```bash
+    curl -Lo queenbee.tar.gz https://github.com/heyangguang/queenbee/releases/download/v{{.Version}}/queenbee_{{.Version}}_linux_amd64.tar.gz
+    tar xzf queenbee.tar.gz
+    sudo mv queenbee /usr/local/bin/
+    ```
+  footer: |
+    **Full Changelog**: https://github.com/heyangguang/queenbee/compare/{{ .PreviousTag }}...{{ .Tag }}
