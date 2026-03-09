@@ -9,7 +9,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-yellow?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
-[![GitHub Stars](https://img.shields.io/github/stars/queenbee-ai/queenbee?style=for-the-badge&logo=github)](https://github.com/queenbee-ai/queenbee/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/heyangguang/queenbee?style=for-the-badge&logo=github)](https://github.com/heyangguang/queenbee/stargazers)
 
 **QueenBee 是一个开源的、本地优先的多 AI Agent 协作引擎。** 它通过 SQLite 消息队列调度多个 AI CLI（Claude、Gemini、Codex、OpenCode），让不同 Agent 以 `@mention` 方式协作对话、自动路由、并行执行任务——并在此基础上提供持久记忆、技能系统和灵魂自省能力。
 
@@ -215,20 +215,20 @@ Agent 组织为 Team，支持 Leader 分发和队友间直接对话：
 
 ```bash
 # 克隆仓库
-git clone https://github.com/queenbee-ai/queenbee.git
+git clone https://github.com/heyangguang/queenbee.git
 cd queenbee
 
 # 构建
 go build -o queenbee .
 
 # 或直接安装
-go install github.com/queenbee-ai/queenbee@latest
+go install github.com/heyangguang/queenbee@latest
 ```
 
 ### macOS 快速安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/queenbee-ai/queenbee/main/darwin-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/heyangguang/queenbee/main/darwin-install.sh | bash
 ```
 
 ### 启动
@@ -418,8 +418,8 @@ go run . serve --port 9876
 
 | 项目 | 说明 |
 |:-----|:-----|
-| [queenbee](https://github.com/queenbee-ai/queenbee) | 🐝 本仓库 — Go 后端引擎 |
-| [queenbee-ui](https://github.com/queenbee-ai/queenbee-ui) | 🖥 Web 管理界面 (Next.js) |
+| [queenbee](https://github.com/heyangguang/queenbee) | 🐝 本仓库 — Go 后端引擎 |
+| [queenbee-ui](https://github.com/heyangguang/queenbee-ui) | 🖥 Web 管理界面 (Next.js) |
 
 ---
 
@@ -427,7 +427,7 @@ go run . serve --port 9876
 
 如果 QueenBee 对你有帮助，请给个 ⭐！
 
-[![Star History Chart](https://api.star-history.com/svg?repos=queenbee-ai/queenbee&type=Date)](https://star-history.com/#queenbee-ai/queenbee&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=heyangguang/queenbee&type=Date)](https://star-history.com/#heyangguang/queenbee&Date)
 
 ---
 
