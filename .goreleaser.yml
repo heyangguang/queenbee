@@ -26,6 +26,8 @@ builds:
         goarch: "386"
       - goos: freebsd
         goarch: arm64
+      - goos: freebsd
+        goarch: "386"
     ldflags:
       - -s -w
       - -X main.version={{.Version}}
@@ -90,7 +92,6 @@ release:
     | Windows | ARM64 | `queenbee_{{.Version}}_windows_arm64.zip` |
     | Windows | x86 (32-bit) | `queenbee_{{.Version}}_windows_386.zip` |
     | FreeBSD | x86_64 | `queenbee_{{.Version}}_freebsd_amd64.tar.gz` |
-    | FreeBSD | x86 (32-bit) | `queenbee_{{.Version}}_freebsd_386.tar.gz` |
 
     ### 📥 快速安装
 
