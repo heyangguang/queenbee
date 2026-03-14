@@ -3,7 +3,7 @@ package types
 // AgentConfig 定义单个 Agent 的配置
 type AgentConfig struct {
 	Name             string            `json:"name"`
-	Provider         string            `json:"provider"`                    // "anthropic", "openai", "opencode", "gemini"
+	Provider         string            `json:"provider"`                    // "anthropic", "openai", "gemini"
 	Model            string            `json:"model"`                       // e.g. "sonnet", "opus", "gpt-5.3-codex"
 	FallbackProvider string            `json:"fallback_provider,omitempty"` // 备用 provider，主 provider 失败时自动切换
 	FallbackModel    string            `json:"fallback_model,omitempty"`    // 备用 model
@@ -73,10 +73,9 @@ type WorkspaceConfig struct {
 }
 
 type ModelsConfig struct {
-	Provider  string         `json:"provider,omitempty"` // "anthropic", "openai", "opencode"
+	Provider  string         `json:"provider,omitempty"` // "anthropic", "openai", "gemini"
 	Anthropic *ProviderModel `json:"anthropic,omitempty"`
 	OpenAI    *ProviderModel `json:"openai,omitempty"`
-	OpenCode  *ProviderModel `json:"opencode,omitempty"`
 }
 
 type ProviderModel struct {
@@ -167,24 +166,6 @@ var CodexModelIDs = map[string]string{
 	"o4-mini":             "o4-mini",
 }
 
-var OpenCodeModelIDs = map[string]string{
-	"opencode/claude-opus-4-6":    "opencode/claude-opus-4-6",
-	"opencode/claude-sonnet-4-5":  "opencode/claude-sonnet-4-5",
-	"opencode/gemini-3-flash":     "opencode/gemini-3-flash",
-	"opencode/gemini-3-pro":       "opencode/gemini-3-pro",
-	"opencode/glm-5":              "opencode/glm-5",
-	"opencode/kimi-k2.5":          "opencode/kimi-k2.5",
-	"opencode/kimi-k2.5-free":     "opencode/kimi-k2.5-free",
-	"opencode/minimax-m2.5":       "opencode/minimax-m2.5",
-	"opencode/minimax-m2.5-free":  "opencode/minimax-m2.5-free",
-	"anthropic/claude-opus-4-6":   "anthropic/claude-opus-4-6",
-	"anthropic/claude-sonnet-4-5": "anthropic/claude-sonnet-4-5",
-	"openai/gpt-5.2":              "openai/gpt-5.2",
-	"openai/gpt-5.3-codex":        "openai/gpt-5.3-codex",
-	"openai/gpt-5.3-codex-spark":  "openai/gpt-5.3-codex-spark",
-	"sonnet":                      "opencode/claude-sonnet-4-5",
-	"opus":                        "opencode/claude-opus-4-6",
-}
 
 // Gemini CLI 模型别名
 var GeminiModelIDs = map[string]string{

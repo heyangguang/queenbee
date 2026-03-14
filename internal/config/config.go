@@ -87,9 +87,7 @@ func GetSettings() *types.Settings {
 		if m, ok := allConfig["models.openai.model"]; ok {
 			settings.Models.OpenAI = &types.ProviderModel{Model: m}
 		}
-		if m, ok := allConfig["models.opencode.model"]; ok {
-			settings.Models.OpenCode = &types.ProviderModel{Model: m}
-		}
+
 	}
 
 	// Monitoring
@@ -196,18 +194,19 @@ func SaveSettings(settings *types.Settings) error {
 		if settings.Models.OpenAI != nil && settings.Models.OpenAI.Model != "" {
 			db.SetGlobalConfig("models.openai.model", settings.Models.OpenAI.Model)
 		}
-		if settings.Models.OpenCode != nil && settings.Models.OpenCode.Model != "" {
-			db.SetGlobalConfig("models.opencode.model", settings.Models.OpenCode.Model)
-		}
+
 	}
 
 	if settings.Monitoring != nil && settings.Monitoring.HeartbeatInterval > 0 {
 		db.SetGlobalConfig("monitoring.heartbeat_interval", fmt.Sprintf("%d", settings.Monitoring.HeartbeatInterval))
 	}
 
-	if settings.Env != nil {
+	if settings.Env != nil && len(settings.Env) > 0 {
 		envJSON, _ := json.Marshal(settings.Env)
 		db.SetGlobalConfig("env", string(envJSON))
+	} else {
+		// 环境变量为空时清除数据库中的记录，确保删除操作生效
+		db.DeleteGlobalConfig("env")
 	}
 
 	if settings.MaxMessages > 0 {
@@ -307,13 +306,6 @@ func ResolveCodexModel(model string) string {
 	return model
 }
 
-// ResolveOpenCodeModel 解析 OpenCode 模型 ID
-func ResolveOpenCodeModel(model string) string {
-	if id, ok := types.OpenCodeModelIDs[model]; ok {
-		return id
-	}
-	return model
-}
 
 // ResolveGeminiModel 解析 Gemini 模型 ID
 func ResolveGeminiModel(model string) string {

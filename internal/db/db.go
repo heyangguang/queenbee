@@ -516,7 +516,8 @@ func DeleteDeadMessage(rowID int64) bool {
 // RecoverStaleMessages 恢复陈旧的 processing 消息
 // 外部消息：恢复到 pending 重新处理
 // 内部消息：检查会话是否仍活跃，活跃则恢复，不活跃则标记 completed
-func RecoverStaleMessages(thresholdMs ...int64) int {
+// activeAgents：当前正在活跃执行的 agent 列表，这些 agent 的消息不应被恢复
+func RecoverStaleMessages(activeAgents []string, thresholdMs ...int64) int {
 	dbMu.Lock()
 	defer dbMu.Unlock()
 
@@ -527,6 +528,12 @@ func RecoverStaleMessages(thresholdMs ...int64) int {
 
 	cutoff := time.Now().UnixMilli() - threshold
 	now := time.Now().UnixMilli()
+
+	// 构建活跃 agent 快速查找集合
+	activeSet := make(map[string]bool, len(activeAgents))
+	for _, a := range activeAgents {
+		activeSet[a] = true
+	}
 
 	// 查出所有陈旧消息及其 conversation_id
 	rows, err := database.Query(
@@ -574,6 +581,12 @@ func RecoverStaleMessages(thresholdMs ...int64) int {
 	var completeIDs []int64 // 无活跃会话的内部消息 → 完成
 
 	for _, m := range staleMsgs {
+		// 跳过仍在活跃运行的 agent 的消息（进程还在跑，不是真的卡死）
+		if activeSet[m.agent] {
+			logging.Log("DEBUG", fmt.Sprintf("跳过活跃 agent 的陈旧消息: %s（agent 仍在运行）", m.detail))
+			continue
+		}
+
 		if !m.isInternal {
 			// 外部消息：直接恢复
 			recoverIDs = append(recoverIDs, m.id)

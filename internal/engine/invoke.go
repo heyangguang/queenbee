@@ -292,8 +292,7 @@ func invokeByProvider(provider, model string, agent *types.AgentConfig, agentID,
 	switch provider {
 	case "openai", "codex":
 		return invokeCodex(&effectiveAgent, agentID, message, workingDir, shouldReset, env, timeoutMin)
-	case "opencode":
-		return invokeOpenCode(&effectiveAgent, agentID, message, workingDir, shouldReset, env, timeoutMin)
+
 	case "gemini", "google":
 		return invokeGemini(&effectiveAgent, agentID, message, workingDir, shouldReset, env, timeoutMin)
 	default:
@@ -415,6 +414,8 @@ func InvokeAgent(
 // 使用 --output-format stream-json --verbose --include-partial-messages 实现流式输出
 // 这样 RunCommand 的 watchdog 可以通过 stdout 活跃度判断进程是否卡死
 func invokeClaude(agent *types.AgentConfig, agentID, message, workingDir string, shouldReset bool, env map[string]string, timeoutMin int) (string, error) {
+	// 注入 IS_SANDBOX=1，允许 root 用户使用 --dangerously-skip-permissions
+	env["IS_SANDBOX"] = "1"
 	logging.Log("INFO", fmt.Sprintf("使用 Claude provider (agent: %s)", agentID))
 
 	continueConversation := !shouldReset
@@ -588,40 +589,12 @@ func RunUtilityPrompt(provider, prompt, systemPrompt string, timeoutMin int) (st
 		}
 		return strings.TrimSpace(output), nil
 
-	case "opencode":
-		// OpenCode CLI: opencode run --format json -
-		fullPrompt := prompt
-		if systemPrompt != "" {
-			fullPrompt = systemPrompt + "\n\n" + prompt
-		}
-		args := []string{"run", "--format", "json", "-"}
-		output, err := RunCommand("opencode", args, "", env, timeoutMin, "", fullPrompt)
-		if err != nil {
-			return "", err
-		}
-		// 解析 JSONL 提取 text 类型
-		var lastText string
-		scanner := bufio.NewScanner(strings.NewReader(output))
-		for scanner.Scan() {
-			var obj map[string]interface{}
-			if err := json.Unmarshal([]byte(scanner.Text()), &obj); err != nil {
-				continue
-			}
-			if obj["type"] == "text" {
-				if part, ok := obj["part"].(map[string]interface{}); ok {
-					if text, ok := part["text"].(string); ok {
-						lastText = text
-					}
-				}
-			}
-		}
-		if lastText != "" {
-			return lastText, nil
-		}
-		return strings.TrimSpace(output), nil
+
 
 	default:
 		// Claude CLI (anthropic): claude --dangerously-skip-permissions -p -
+		// 注入 IS_SANDBOX=1，允许 root 用户使用 --dangerously-skip-permissions
+		env["IS_SANDBOX"] = "1"
 		args := []string{"--dangerously-skip-permissions"}
 		if systemPrompt != "" {
 			args = append(args, "--system-prompt", systemPrompt)
@@ -711,54 +684,6 @@ func invokeCodex(agent *types.AgentConfig, agentID, message, workingDir string, 
 	return response, nil
 }
 
-// invokeOpenCode 调用 OpenCode CLI
-func invokeOpenCode(agent *types.AgentConfig, agentID, message, workingDir string, shouldReset bool, env map[string]string, timeoutMin int) (string, error) {
-	modelID := config.ResolveOpenCodeModel(agent.Model)
-	logging.Log("INFO", fmt.Sprintf("使用 OpenCode CLI (agent: %s, model: %s)", agentID, modelID))
-
-	continueConversation := !shouldReset
-	if shouldReset {
-		logging.Log("INFO", fmt.Sprintf("🔄 重置 OpenCode 对话 (agent: %s)", agentID))
-	}
-
-	args := []string{"run", "--format", "json"}
-	if modelID != "" {
-		args = append(args, "--model", modelID)
-	}
-	// 不使用 -c：每条消息独立会话，避免旧上下文污染（与 Claude provider 一致）
-	if continueConversation {
-		logging.Log("DEBUG", fmt.Sprintf("跳过 -c 标志，使用记忆注入替代会话续写 (agent: %s)", agentID))
-	}
-	// 通过 stdin 传递消息
-	args = append(args, "-")
-
-	output, err := RunCommand("opencode", args, workingDir, env, timeoutMin, agentID, message)
-	if err != nil {
-		return "", err
-	}
-
-	// 解析 JSONL 输出
-	response := ""
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		var obj map[string]interface{}
-		if err := json.Unmarshal([]byte(scanner.Text()), &obj); err != nil {
-			continue
-		}
-		if obj["type"] == "text" {
-			if part, ok := obj["part"].(map[string]interface{}); ok {
-				if text, ok := part["text"].(string); ok {
-					response = text
-				}
-			}
-		}
-	}
-
-	if response == "" {
-		return "Sorry, I could not generate a response from OpenCode.", nil
-	}
-	return response, nil
-}
 
 // invokeGemini 调用 Google Gemini CLI
 func invokeGemini(agent *types.AgentConfig, agentID, message, workingDir string, shouldReset bool, env map[string]string, timeoutMin int) (string, error) {

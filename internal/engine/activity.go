@@ -106,3 +106,16 @@ func ActivityToJSON(a *AgentActivity) string {
 	data, _ := json.Marshal(a)
 	return string(data)
 }
+
+// GetActiveAgentIDs 返回当前正在运行进程的所有 agent ID
+// 基于 processStore（记录了正在执行的 agent 进程）
+func GetActiveAgentIDs() []string {
+	var ids []string
+	processStore.Range(func(key, _ interface{}) bool {
+		if id, ok := key.(string); ok {
+			ids = append(ids, id)
+		}
+		return true
+	})
+	return ids
+}

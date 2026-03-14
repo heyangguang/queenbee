@@ -209,7 +209,7 @@ var setupCmd = &cobra.Command{
 		}
 
 		// Provider
-		fmt.Print("AI Provider (anthropic/openai/opencode) [anthropic]: ")
+		fmt.Print("AI Provider (anthropic/openai/gemini) [anthropic]: ")
 		provider := readLine(reader)
 		if provider == "" {
 			provider = "anthropic"
@@ -267,8 +267,7 @@ var setupCmd = &cobra.Command{
 		switch provider {
 		case "openai":
 			settings.Models.OpenAI = &types.ProviderModel{Model: model}
-		case "opencode":
-			settings.Models.OpenCode = &types.ProviderModel{Model: model}
+
 		default:
 			settings.Models.Anthropic = &types.ProviderModel{Model: model}
 		}
@@ -318,7 +317,7 @@ func init() {
 			}
 			fmt.Print("名称: ")
 			name := readLine(reader)
-			fmt.Print("Provider (anthropic/openai/opencode) [anthropic]: ")
+			fmt.Print("Provider (anthropic/openai/gemini) [anthropic]: ")
 			provider := readLine(reader)
 			if provider == "" {
 				provider = "anthropic"

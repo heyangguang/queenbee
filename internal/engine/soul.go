@@ -84,8 +84,7 @@ func MaybeTriggerSoulUpdate(agentID, agentDir string, agent *types.AgentConfig) 
 		err = soulUpdateClaude(agent, agentID, agentDir, mergedEnv)
 	case "openai", "codex":
 		err = soulUpdateCodex(agent, agentID, agentDir, mergedEnv)
-	case "opencode":
-		err = soulUpdateOpenCode(agent, agentID, agentDir, mergedEnv)
+
 	case "gemini", "google":
 		err = soulUpdateGemini(agent, agentID, agentDir, mergedEnv)
 	default:
@@ -101,6 +100,8 @@ func MaybeTriggerSoulUpdate(agentID, agentDir string, agent *types.AgentConfig) 
 
 // soulUpdateClaude 使用 Claude CLI 执行 soul 更新
 func soulUpdateClaude(agent *types.AgentConfig, agentID, agentDir string, env map[string]string) error {
+	// 注入 IS_SANDBOX=1，允许 root 用户使用 --dangerously-skip-permissions
+	env["IS_SANDBOX"] = "1"
 	modelID := config.ResolveClaudeModel(agent.Model)
 	args := []string{
 		"--dangerously-skip-permissions",
@@ -152,18 +153,3 @@ func soulUpdateGemini(agent *types.AgentConfig, agentID, agentDir string, env ma
 	return err
 }
 
-// soulUpdateOpenCode 使用 OpenCode CLI 执行 soul 更新
-func soulUpdateOpenCode(agent *types.AgentConfig, agentID, agentDir string, env map[string]string) error {
-	modelID := config.ResolveOpenCodeModel(agent.Model)
-	args := []string{
-		"run",
-		"--format", "json",
-		"-",
-	}
-	if modelID != "" {
-		args = append(args, "--model", modelID)
-	}
-
-	_, err := RunCommand("opencode", args, agentDir, env, soulUpdateTimeoutMin, "", soulUpdatePrompt)
-	return err
-}

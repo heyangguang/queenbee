@@ -733,8 +733,8 @@ func StartProcessor() {
 		return
 	}
 
-	// 恢复陈旧消息
-	recovered := db.RecoverStaleMessages()
+	// 恢复陈旧消息（启动时没有活跃 agent，传空列表）
+	recovered := db.RecoverStaleMessages(nil)
 	if recovered > 0 {
 		logging.Log("INFO", fmt.Sprintf("恢复 %d 条陈旧消息", recovered))
 	}
@@ -826,7 +826,9 @@ func StartProcessor() {
 						logging.Log("ERROR", fmt.Sprintf("RecoverStaleMessages panic: %v", r))
 					}
 				}()
-				count := db.RecoverStaleMessages()
+				// 获取当前活跃 agent 列表，排除仍在运行的 agent 的消息
+				activeAgents := GetActiveAgentIDs()
+				count := db.RecoverStaleMessages(activeAgents)
 				if count > 0 {
 					logging.Log("INFO", fmt.Sprintf("恢复 %d 条陈旧消息", count))
 				}

@@ -98,8 +98,7 @@ func handleSetup(c *gin.Context) {
 	switch req.DefaultProvider {
 	case "openai":
 		settings.Models.OpenAI = &types.ProviderModel{Model: req.DefaultModel}
-	case "opencode":
-		settings.Models.OpenCode = &types.ProviderModel{Model: req.DefaultModel}
+
 	case "gemini":
 		// Gemini 暂无 ProviderModel 字段，存入全局配置
 		db.SetGlobalConfig("models.gemini.model", req.DefaultModel)
@@ -165,27 +164,7 @@ func handleListProviders(c *gin.Context) {
 				"o4-mini":             "o4-mini",
 			}),
 		},
-		{
-			ID: "opencode", Name: "OpenCode", CLI: "opencode",
-			Models: buildModels(types.OpenCodeModelIDs, map[string]string{
-				"opencode/claude-opus-4-6":    "Claude Opus 4.6 (OpenCode)",
-				"opencode/claude-sonnet-4-5":  "Claude Sonnet 4.5 (OpenCode)",
-				"opencode/gemini-3-flash":     "Gemini 3 Flash (OpenCode)",
-				"opencode/gemini-3-pro":       "Gemini 3 Pro (OpenCode)",
-				"opencode/glm-5":              "GLM-5 (OpenCode)",
-				"opencode/kimi-k2.5":          "Kimi K2.5 (OpenCode)",
-				"opencode/kimi-k2.5-free":     "Kimi K2.5 Free (OpenCode)",
-				"opencode/minimax-m2.5":       "MiniMax M2.5 (OpenCode)",
-				"opencode/minimax-m2.5-free":  "MiniMax M2.5 Free (OpenCode)",
-				"anthropic/claude-opus-4-6":   "Claude Opus 4.6 (Anthropic Direct)",
-				"anthropic/claude-sonnet-4-5": "Claude Sonnet 4.5 (Anthropic Direct)",
-				"openai/gpt-5.2":              "GPT-5.2 (OpenAI Direct)",
-				"openai/gpt-5.3-codex":        "GPT-5.3 Codex (OpenAI Direct)",
-				"openai/gpt-5.3-codex-spark":  "GPT-5.3 Codex Spark (OpenAI Direct)",
-				"sonnet":                      "Claude Sonnet 4.5 (别名)",
-				"opus":                        "Claude Opus 4.6 (别名)",
-			}),
-		},
+
 		{
 			ID: "gemini", Name: "Google Gemini", CLI: "gemini",
 			Models: buildModels(types.GeminiModelIDs, map[string]string{
@@ -227,8 +206,7 @@ func handleListProviderModels(c *gin.Context) {
 		modelIDs = types.ClaudeModelIDs
 	case "openai":
 		modelIDs = types.CodexModelIDs
-	case "opencode":
-		modelIDs = types.OpenCodeModelIDs
+
 	case "gemini":
 		modelIDs = types.GeminiModelIDs
 	default:

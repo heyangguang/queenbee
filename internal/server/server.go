@@ -563,8 +563,8 @@ func handleRecoverStale(c *gin.Context) {
 		}
 	}
 
-	// 阈值 0 = 立即恢复所有 processing 消息
-	recovered := db.RecoverStaleMessages(0)
+	// 阈值 0 = 立即恢复所有 processing 消息（手动恢复不排除活跃 agent）
+	recovered := db.RecoverStaleMessages(nil, 0)
 	logging.Log("INFO", fmt.Sprintf("[API] 手动恢复 %d 条卡死消息 (kill=%v, killed=%v)", recovered, req.Kill, killed))
 	c.JSON(200, gin.H{"ok": true, "recovered": recovered, "killed": killed})
 }

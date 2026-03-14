@@ -62,7 +62,7 @@ var attachCmd = &cobra.Command{
 var providerCmd = &cobra.Command{
 	Use:   "provider [name]",
 	Short: "查看或切换 AI Provider",
-	Long:  "不带参数查看当前 provider，带参数切换为指定 provider（anthropic/openai/opencode）",
+	Long:  "不带参数查看当前 provider，带参数切换为指定 provider（anthropic/openai/gemini）",
 	Run: func(cmd *cobra.Command, args []string) {
 		settings := config.GetSettings()
 
@@ -76,8 +76,8 @@ var providerCmd = &cobra.Command{
 		}
 
 		newProvider := args[0]
-		if newProvider != "anthropic" && newProvider != "openai" && newProvider != "opencode" {
-			fmt.Printf("❌ 不支持的 provider: %s（可选: anthropic/openai/opencode）\n", newProvider)
+		if newProvider != "anthropic" && newProvider != "openai" && newProvider != "gemini" {
+			fmt.Printf("❌ 不支持的 provider: %s（可选: anthropic/openai/gemini）\n", newProvider)
 			return
 		}
 
@@ -146,10 +146,7 @@ func getProviderAndModel(settings *types.Settings) (string, string) {
 			if settings.Models.OpenAI != nil {
 				model = settings.Models.OpenAI.Model
 			}
-		case "opencode":
-			if settings.Models.OpenCode != nil {
-				model = settings.Models.OpenCode.Model
-			}
+
 		default:
 			if settings.Models.Anthropic != nil {
 				model = settings.Models.Anthropic.Model
@@ -166,8 +163,8 @@ func setProviderModel(settings *types.Settings, provider, model string) {
 	switch provider {
 	case "openai":
 		settings.Models.OpenAI = &types.ProviderModel{Model: model}
-	case "opencode":
-		settings.Models.OpenCode = &types.ProviderModel{Model: model}
+	case "gemini":
+		// Gemini 暂无 ProviderModel 字段
 	default:
 		settings.Models.Anthropic = &types.ProviderModel{Model: model}
 	}
